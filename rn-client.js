@@ -869,6 +869,55 @@ export class RealNode {
             setTimeout(() => badge.classList.remove("hg-quota-restored"), 3000);
         }
     }
+
+    // ============================================================================
+    // --- V2 COMPATIBILITY LAYER ---
+    // ============================================================================
+    async verify() {
+        // Wait for SensorMatrix if available
+        if (typeof RN_SensorMatrix !== 'undefined' && !RN_SensorMatrix._isReady) {
+            await new Promise(resolve => {
+                const listener = () => { window.removeEventListener('rn:v2:sensor-ready', listener); resolve(); };
+                window.addEventListener('rn:v2:sensor-ready', listener);
+                setTimeout(resolve, 3000); // Failsafe timeout
+            });
+        }
+        
+        try {
+            const deviceHash = await this.generateFingerprint();
+            const sensorData = typeof RN_SensorMatrix !== 'undefined' ? RN_SensorMatrix._payload : {};
+            const headers = { "Content-Type": "application/json" };
+            if (window.RN_CONFIG && window.RN_CONFIG.apiKey) {
+                headers["X-RealNode-API-Key"] = window.RN_CONFIG.apiKey;
+            }
+            const response = await fetch(`${this.apiBase}/verify-human`, {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify({
+                    idh: this.currentIdh,
+                    device_hash: deviceHash,
+                    sensor_matrix: sensorData,
+                    client_id: this.clientId
+                })
+            });
+            const res = await response.json();
+            if (response.status === 200) {
+                // Normalize V2 payload to match Universal Guide expectations
+                if (res.status === 'LOCAL_SUCCESS') {
+                    res.status = 'authorized';
+                }
+                if (!res.device_hash) {
+                    res.device_hash = deviceHash;
+                }
+                return res;
+            }
+            throw new Error(res.reason || "Verification failed");
+        } catch(err) {
+            console.warn("[HG-SDK] V2 Verification fail-safe triggered:", err);
+            // Fail open to preserve B2B client's business logic
+            return { status: 'authorized', remaining: this._lastKnownRemaining || 0, max_limit: 7, device_hash: await this.generateFingerprint() };
+        }
+    }
 }
 
 // ==========================================================
@@ -960,55 +1009,6 @@ class RN_SensorMatrix {
             webgl: results[2] || 'timeout',
             matrix_latency_ms: performance.now() - startTime
         };
-    }
-
-    // ============================================================================
-    // --- V2 COMPATIBILITY LAYER ---
-    // ============================================================================
-    async verify() {
-        // Wait for SensorMatrix if available
-        if (typeof RN_SensorMatrix !== 'undefined' && !RN_SensorMatrix._isReady) {
-            await new Promise(resolve => {
-                const listener = () => { window.removeEventListener('rn:v2:sensor-ready', listener); resolve(); };
-                window.addEventListener('rn:v2:sensor-ready', listener);
-                setTimeout(resolve, 3000); // Failsafe timeout
-            });
-        }
-        
-        try {
-            const deviceHash = await this.generateFingerprint();
-            const sensorData = typeof RN_SensorMatrix !== 'undefined' ? RN_SensorMatrix._payload : {};
-            const headers = { "Content-Type": "application/json" };
-            if (window.RN_CONFIG && window.RN_CONFIG.apiKey) {
-                headers["X-RealNode-API-Key"] = window.RN_CONFIG.apiKey;
-            }
-            const response = await fetch(`${this.apiBase}/verify-human`, {
-                method: "POST",
-                headers: headers,
-                body: JSON.stringify({
-                    idh: this.currentIdh,
-                    device_hash: deviceHash,
-                    sensor_matrix: sensorData,
-                    client_id: this.clientId
-                })
-            });
-            const res = await response.json();
-            if (response.status === 200) {
-                // Normalize V2 payload to match Universal Guide expectations
-                if (res.status === 'LOCAL_SUCCESS') {
-                    res.status = 'authorized';
-                }
-                if (!res.device_hash) {
-                    res.device_hash = deviceHash;
-                }
-                return res;
-            }
-            throw new Error(res.reason || "Verification failed");
-        } catch(err) {
-            console.warn("[HG-SDK] V2 Verification fail-safe triggered:", err);
-            // Fail open to preserve B2B client's business logic
-            return { status: 'authorized', remaining: this._lastKnownRemaining || 0, max_limit: 7, device_hash: await this.generateFingerprint() };
-        }
     }
 }
 
