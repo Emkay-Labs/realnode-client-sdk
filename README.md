@@ -31,7 +31,7 @@ You can load the SDK directly via CDN in your HTML entry point. No NPM installat
 </script>
 
 <!-- 2. Load the asynchronous SDK -->
-<script type="module" src="https://app.realnode.emkaylabs.tech/rn-client.js"></script>
+<script type="module" src="https://api.emkaylabs.tech/rn-client.js"></script>
 ```
 
 ## Quick Start (React / Next.js)
@@ -39,39 +39,50 @@ You can load the SDK directly via CDN in your HTML entry point. No NPM installat
 The SDK works seamlessly within modern SPAs. Since it binds to the `window` object, you only need to call the verification function prior to high-risk actions (e.g., Checkout, Registration).
 
 ```javascript
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function CheckoutButton() {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleCheckout = async () => {
-    setIsProcessing(true);
+  useEffect(() => {
+    // 1. Listen for the SDK's verification event
+    // The SDK automatically handles the click, silent verification, and FIDO2 prompts.
+    const handleVerification = async (e) => {
+      setIsProcessing(true);
+      const result = e.detail;
 
-    try {
-      // 1. Request Hardware Attestation
-      // If the user is flagged as trusted, this resolves silently in <10ms.
-      // If the user is doubtful (RN Sentinel) or verification is mandated (RN Vault),
-      // a native FIDO2 prompt is triggered automatically.
-      const result = await window.RN_V2.verify();
-
-      if (result.status === 'allowed') {
-        // Proceed with your payment logic
-        await processPayment();
-        
-        // Consume the quota post-transaction
-        await window.RN_V2.consume(1);
-      } else {
-        alert("Security validation failed.");
+      try {
+        if (result.status === 'authorized') {
+          // Send result to YOUR backend for /consume validation
+          await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idh: result.idh, device_hash: result.device_hash })
+          });
+          
+          // Proceed with your payment logic
+          await processPayment();
+        } else {
+          alert("Security validation failed (Bot detected).");
+        }
+      } catch (error) {
+        console.error("RealNode checkout error:", error);
+      } finally {
+        setIsProcessing(false);
       }
-    } catch (error) {
-      console.error("RealNode validation error:", error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+    };
+
+    const btn = document.getElementById('rn-btn-checkout');
+    if (btn) btn.addEventListener('rn:verified', handleVerification);
+
+    return () => {
+      if (btn) btn.removeEventListener('rn:verified', handleVerification);
+    };
+  }, []);
 
   return (
-    <button onClick={handleCheckout} disabled={isProcessing}>
+    // 2. Add data-rn-protect to intercept clicks automatically
+    <button id="rn-btn-checkout" data-rn-protect disabled={isProcessing}>
       {isProcessing ? "Verifying..." : "Complete Purchase"}
     </button>
   );
