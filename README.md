@@ -1,24 +1,48 @@
-# RealNode Client SDK
+# RealNode Client SDK 
 
-The official, zero-dependency browser client for the **RealNode Hardware Attestation Protocol**. 
-Built specifically for High-Demand Ticketing, Flash Sales, and environments where automated traffic outpaces standard software analysis.
+The official browser and React client for the **RealNode Hardware Attestation Protocol**. Built specifically for High-Demand Ticketing, Flash Sales, and environments where automated traffic outpaces standard software analysis.
 
-## Overview
+By enforcing hardware-level biometric authentication (FIDO2/WebAuthn/Passkeys), RealNode mathematically guarantees proof of human presence, eliminating bots, scalpers, and credential stuffing.
 
-Generalist software security fails when stocks vanish in seconds. Behavioral models require time to learn, which is time you do not have during a flash sale. 
+---
 
-RealNode takes a deterministic approach. By delegating the initial threat vector validation to the client-side hardware enclave (using FIDO2/WebAuthn and Hardware Device Fingerprinting), RealNode stops automated scalpers instantly, silently, and with **zero personal data retention**.
+## The RealNode Ecosystem
 
-This repository contains the public client SDK (`rn-client.js`). Our backend architecture (passive behavioral engine, cryptographic validators, and atomic SQL quotas) remains strictly closed-source. This Open-Core approach guarantees absolute transparency regarding what executes on your end-users' devices while protecting our core detection algorithms.
+RealNode is distributed across multiple platforms to ensure seamless integration into any technology stack. 
 
-## Features
+### 1. NPM SDK (React, Next.js, Node.js)
+For modern web applications, we provide a fully-typed, SSR-safe React SDK.
+- **Package:** [@emkaylabs/realnode-sdk](https://www.npmjs.com/package/@emkaylabs/realnode-sdk)
+- **Features:** React Hooks, drop-in Checkout Components, and Account Device Management UIs.
+- **Installation:** `npm install @emkaylabs/realnode-sdk`
+
+### 2. WordPress / WooCommerce Plugin
+For e-commerce merchants on WordPress, we provide a no-code integration plugin that secures WooCommerce checkouts.
+- **Status:** *Currently under review by the WordPress.org plugin directory.*
+- **Features:** One-click activation, silent Insight mode, aggressive Sentinel blocking.
+
+### 3. Vanilla JS (CDN)
+For legacy architectures, the core client can be loaded directly without build steps.
+- **Source Code:** [`rn-client.js`](./rn-client.js)
+
+---
+
+##  Interactive Sandbox
+
+Want to see how RealNode stops bots without relying on CAPTCHAs? Test the full biometric protocol in your browser.
+
+ **[Test the RealNode Sandbox](https://realnode.emkaylabs.tech/sandbox)** *(Free account required)*
+
+---
+
+##  Features (Vanilla JS Client)
 
 - **Zero Dependencies**: A single, lightweight (`< 20kb`), asynchronous script.
 - **Hardware-Backed**: Interfaces natively with device security modules (TouchID, FaceID, Windows Hello).
 - **Silent Operation**: Operates asynchronously without blocking the main thread or impacting Lighthouse scores.
 - **Privacy by Design**: Collects zero PII. All data is reduced to anonymous hardware hashes (IDH) before transmission.
 
-## Installation
+##  Installation (Vanilla JS)
 
 You can load the SDK directly via CDN in your HTML entry point. No NPM installation is required, allowing the script to self-update securely.
 
@@ -34,7 +58,7 @@ You can load the SDK directly via CDN in your HTML entry point. No NPM installat
 <script type="module" src="https://api.emkaylabs.tech/rn-client.js"></script>
 ```
 
-## Quick Start (React / Next.js)
+##  Quick Start (Vanilla / Basic DOM)
 
 The SDK works seamlessly within modern SPAs. Since it binds to the `window` object, you only need to call the verification function prior to high-risk actions (e.g., Checkout, Registration).
 
@@ -46,7 +70,6 @@ export default function CheckoutButton() {
 
   useEffect(() => {
     // 1. Listen for the SDK's verification event
-    // The SDK automatically handles the click, silent verification, and FIDO2 prompts.
     const handleVerification = async (e) => {
       setIsProcessing(true);
       const result = e.detail;
@@ -61,7 +84,6 @@ export default function CheckoutButton() {
           });
           
           // Proceed with your payment logic
-          await processPayment();
         } else {
           alert("Security validation failed (Bot detected).");
         }
@@ -88,17 +110,29 @@ export default function CheckoutButton() {
   );
 }
 ```
+*(Note: For strict React/Next.js projects, use the NPM package `@emkaylabs/realnode-sdk` instead of this Vanilla DOM approach).*
 
-## Architecture Philosophy: Why Open-Core?
+---
+
+##  Architecture Philosophy: Why Open-Core?
 
 In cybersecurity, trust cannot be demanded; it must be proven. 
 By making our client SDK public, we allow security engineers, CTOs, and integration teams to audit exactly what data is collected from the browser and how the cryptographic challenges are handled. 
 
 Our backend infrastructure—which processes these cryptographic signatures and handles the global threat-intelligence network—remains proprietary to prevent adversarial reverse-engineering.
 
-## Support & Enterprise
+---
 
-For integration assistance, custom SLA requirements, or Enterprise volumes, please contact our engineering team at `realnode@emkaylabs.tech`.
+## Resources & Documentation
+
+- **Official Website:** [realnode.emkaylabs.tech](https://realnode.emkaylabs.tech)
+- **Technical Blog & Integration Guide:** [realnode.emkaylabs.tech/blog](https://realnode.emkaylabs.tech/blog)
+- **B2B Inquiries & Enterprise:** [realnode@emkaylabs.tech](mailto:realnode@emkaylabs.tech)
+- **Security Support:** [security@emkaylabs.tech](mailto:security@emkaylabs.tech)
 
 ---
-*© 2026 RealNode by EmkayLabs. All rights reserved.*
+
+##  License
+
+RealNode core infrastructure and proprietary logic are maintained by EMKAY LABS.
+This Client SDK is open-sourced and distributed under the **MIT License**.
