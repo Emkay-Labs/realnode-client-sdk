@@ -18,7 +18,7 @@ For modern web applications, we provide a fully-typed, SSR-safe React SDK.
 
 ### 2. WordPress / WooCommerce Plugin
 For e-commerce merchants on WordPress, we provide a no-code integration plugin that secures WooCommerce checkouts.
-- **Status:** *Currently under review by the WordPress.org plugin directory.*
+- **Plugin Directory:** [RealNode Anti-Scalper on WordPress.org](https://wordpress.org/plugins/realnode-anti-scalper/)
 - **Features:** One-click activation, silent Insight mode, aggressive Sentinel blocking.
 
 ### 3. Vanilla JS (CDN)
